@@ -143,3 +143,7 @@ dmypy.json
 
 # wandb log files
 wandb/
+
+Data_Catfaces/
+
+.idea/
