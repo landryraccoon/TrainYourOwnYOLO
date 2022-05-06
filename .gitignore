@@ -143,3 +143,6 @@ dmypy.json
 
 # wandb log files
 wandb/
+
+# Intellij
+.idea/
