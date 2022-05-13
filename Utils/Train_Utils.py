@@ -51,6 +51,7 @@ def get_classes(classes_path):
 
 def get_anchors(anchors_path):
     """loads the anchors from a file"""
+    print(f"!!! get_anchors {anchors_path=}")
     with open(anchors_path) as f:
         anchors = f.readline()
     anchors = [float(x) for x in anchors.split(",")]

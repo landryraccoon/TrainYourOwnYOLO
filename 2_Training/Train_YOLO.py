@@ -3,9 +3,9 @@ MODIFIED FROM keras-yolo3 PACKAGE, https://github.com/qqwweee/keras-yolo3
 Retrain the YOLO model for your own dataset.
 """
 
+import argparse
 import os
 import sys
-import argparse
 import warnings
 
 
@@ -25,9 +25,6 @@ utils_path = os.path.join(get_parent_dir(1), "Utils")
 sys.path.append(utils_path)
 
 import numpy as np
-import tensorflow.keras.backend as K
-from tensorflow.keras.layers import Input, Lambda
-from tensorflow.keras import Model
 from tensorflow.keras.optimizers import Adam
 
 from tensorflow.keras.callbacks import (
@@ -36,24 +33,15 @@ from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
     EarlyStopping,
 )
-from keras_yolo3.yolo3.model import (
-    preprocess_true_boxes,
-    yolo_body,
-    tiny_yolo_body,
-    yolo_loss,
-)
-from keras_yolo3.yolo3.utils import get_random_data
-from PIL import Image
+
 from time import time
 import tensorflow.compat.v1 as tf
-import pickle
 
 from Train_Utils import (
     get_classes,
     get_anchors,
     create_model,
     create_tiny_model,
-    data_generator,
     data_generator_wrapper,
     ChangeToOtherMachine,
 )
@@ -153,22 +141,6 @@ if __name__ == "__main__":
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
         warnings.filterwarnings("ignore")
 
-    # Get WandB integration if setup
-    try:
-        import wandb
-        from wandb.integration.keras import WandbCallback  # type: ignore
-
-        wandb.ensure_configured()
-        if wandb.api.api_key is None:
-            _has_wandb = False
-            wandb.termwarn(
-                "W&B installed but not logged in.  Run `wandb login` or set the WANDB_API_KEY env variable."
-            )
-        else:
-            _has_wandb = False if os.getenv("WANDB_DISABLED") else True
-    except (ImportError, AttributeError):
-        _has_wandb = False
-
     np.random.seed(FLAGS.random_seed)
 
     log_dir = FLAGS.log_dir
@@ -232,13 +204,6 @@ if __name__ == "__main__":
     # Adjust num epochs to your dataset. This step is enough to obtain a decent model.
     frozen_callbacks = [logging, checkpoint]
 
-    if _has_wandb:
-        wandb.init(
-            project="TrainYourOwnYOLO", config=vars(FLAGS), sync_tensorboard=False
-        )
-        wandb_callback = WandbCallback(save_model=False)
-        frozen_callbacks.append(wandb_callback)
-
     model.compile(
         optimizer=Adam(lr=1e-3),
         loss={
@@ -272,9 +237,6 @@ if __name__ == "__main__":
     # Train longer if the result is unsatisfactory.
 
     full_callbacks = [logging, checkpoint, reduce_lr, early_stopping]
-
-    if _has_wandb:
-        full_callbacks.append(wandb_callback)
 
     for i in range(len(model.layers)):
         model.layers[i].trainable = True
